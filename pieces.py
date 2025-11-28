@@ -14,6 +14,14 @@ BR = -4	# Black Rook
 BQ = -5	# Black Queen
 BK = -6	# Black King
 
+
+PIECE2POINT = {
+    WP: 1, WN: 3, WB: 3, WR: 5, WQ: 9, WK: 200,
+    BP: 1, BN: 3, BB: 3, BR: 5, BQ: 9, BK: 200,
+    E: 0
+}
+
+
 def get_pawn_legals(board, color, position):
     legal_moves = []
     rank, file = position
