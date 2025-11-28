@@ -16,13 +16,23 @@ def get_fresh_board():
     return board
 
 
+PIECE_SYMBOLS = {
+    WK: '♔', WQ: '♕', WR: '♖', WB: '♗', WN: '♘', WP: '♙',
+    BK: '♚', BQ: '♛', BR: '♜', BB: '♝', BN: '♞', BP: '♟',
+    E: '·'
+}
+
+
 def print_board(board):
-    for row in board:
-        row_str = ""
-        for piece in row:
-            if piece >= 0:
-                row_str += " " + str(piece)
-            else:
-                row_str += str(piece)
+    print("  a b c d e f g h")
+    print("  ---------------")
+    for rank in range(7, -1, -1):
+        row_str = f"{rank + 1}|"
+        for file in range(8):
+            piece = board[rank][file]
+            symbol = PIECE_SYMBOLS.get(piece, '?')
+            row_str += f"{symbol} "
         print(row_str)
+    print("  ---------------")
+    print("  a b c d e f g h")
 
