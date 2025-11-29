@@ -1,9 +1,9 @@
 import os
-import time
 import random
-from pieces import WK, BK, E
+import time
+
 from board import get_fresh_board, print_board
-from pieces import PIECE2FUNC, PIECE2POINT
+from pieces import BK, WK, E, PIECE2FUNC, PIECE2POINT
 
 
 def get_legal_moves(board, color):
@@ -13,7 +13,7 @@ def get_legal_moves(board, color):
             piece = board[rank][file]
             if piece == E:
                 continue
-            piece_color = 'white' if piece > 0 else 'black'
+            piece_color = "white" if piece > 0 else "black"
             if piece_color != color:
                 continue
             if piece in PIECE2FUNC:
@@ -48,52 +48,48 @@ def make_random_move(board, color):
     make_move(board, chosen_move)
 
 
+def get_opponent(color):
+    return "black" if color == "white" else "white"
+
+
+def is_maximizing(color):
+    return color == "white"
+
+
 def choose_random_best_move(points_w_moves, color):
     points = [point_w_move[0] for point_w_move in points_w_moves]
-    if color == "white":
-        target_point = max(points)
-    else:
-        target_point = min(points)
-    candidate_moves =  [point_w_move for point_w_move in points_w_moves if point_w_move[0] == target_point]
+    target_point = max(points) if is_maximizing(color) else min(points)
+    candidate_moves = [
+        point_w_move
+        for point_w_move in points_w_moves
+        if point_w_move[0] == target_point
+    ]
     return random.choice(candidate_moves)
 
 
-def minimax(board, color, n):
-    if n == 0:
-        points_w_moves = []
-        legal_moves = get_legal_moves(board, color)
-        for move in legal_moves:
-            prev_piece = make_move(board, move)
-            move_point = evaluate_board(board)
-            undo_move(board, move, prev_piece)
-            points_w_moves.append((move_point, move))
-        return points_w_moves
-    else:
-        points_w_moves = []
-        legal_moves = get_legal_moves(board, color)
-        for move in legal_moves:
-            prev_piece = make_move(board, move)
-            finished, winner = check_game_finished(board)
-
-            if finished:
-                if winner == color:
-                    move_point = float('inf')
-                else:
-                    move_point = float('-inf')
-                points_w_moves.append((move_point, move))
-            else:
-                if color == "white":
-                    black_best_point_w_move = choose_random_best_move(minimax(board, "black", n - 1), "black")
-                    points_w_moves.append((black_best_point_w_move[0], move))
-                else:
-                    white_best_point_w_move = choose_random_best_move(minimax(board, "white", n - 1), "white")
-                    points_w_moves.append((white_best_point_w_move[0], move))
-            undo_move(board, move, prev_piece)
-        return points_w_moves
+def minimax(board, color, depth):
+    if depth == 0 or check_game_finished(board)[0]:
+        return evaluate_board(board)
+    best_point = float("-inf") if is_maximizing(color) else float("inf")
+    legal_moves = get_legal_moves(board, color)
+    for move in legal_moves:
+        prev_piece = make_move(board, move)
+        selector = max if is_maximizing(color) else min
+        best_point = selector(
+            best_point, minimax(board, get_opponent(color), depth - 1)
+        )
+        undo_move(board, move, prev_piece)
+    return best_point
 
 
-def minimax_player(board, color, n):
-    points_w_moves = minimax(board, color, n)
+def minimax_player(board, color, depth):
+    legal_moves = get_legal_moves(board, color)
+    points_w_moves = []
+    for move in legal_moves:
+        prev_piece = make_move(board, move)
+        point = minimax(board, get_opponent(color), depth - 1)
+        points_w_moves.append((point, move))
+        undo_move(board, move, prev_piece)
     best_point_w_move = choose_random_best_move(points_w_moves, color)
     make_move(board, best_point_w_move[1])
 
@@ -111,8 +107,7 @@ def get_color_score(board, color):
     flat_board = [piece for row in board for piece in row]
     if color == "white":
         return sum(PIECE2POINT[piece] for piece in flat_board if piece > 0)
-    else:
-        return sum(PIECE2POINT[piece] for piece in flat_board if piece < 0)
+    return sum(PIECE2POINT[piece] for piece in flat_board if piece < 0)
 
 
 def evaluate_board(board):
@@ -125,16 +120,19 @@ def main():
     print_board(board)
     color = "white"
     white_took, black_took = 0, 0
+    white_all_times, black_all_times = [], []
     for turn in range(2000):
         if color == "white":
             start = time.time()
-            minimax_player(board, color, 2)
+            minimax_player(board, color, 3)
             white_took = time.time() - start
+            white_all_times.append(white_took)
         else:
             start = time.time()
-            minimax_player(board, color, 1)
+            minimax_player(board, color, 2)
             black_took = time.time() - start
-        
+            black_all_times.append(black_took)
+
         os.system("clear")
         print_board(board)
 
@@ -151,9 +149,15 @@ def main():
 
         if finished:
             print(f"Game finished. {winner} wins!")
+            print(
+                f"White avg time per move: {sum(white_all_times)/len(white_all_times)}"
+            )
+            print(
+                f"Black avg time per move: {sum(black_all_times)/len(black_all_times)}"
+            )
             break
 
-        color = "black" if color == "white" else "white"
+        color = get_opponent(color)
 
 
 if __name__ == "__main__":
