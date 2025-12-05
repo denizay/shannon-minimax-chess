@@ -107,11 +107,15 @@ def get_color_score(board, color):
     flat_board = [piece for row in board for piece in row]
     if color == "white":
         return sum(PIECE2POINT[piece] for piece in flat_board if piece > 0)
-    return sum(PIECE2POINT[piece] for piece in flat_board if piece < 0)
+    return -1 * sum(PIECE2POINT[piece] for piece in flat_board if piece < 0) 
 
 
 def evaluate_board(board):
-    return get_color_score(board, "white") - get_color_score(board, "black")
+    total_point = 0
+    for row in board:
+        for piece in row:
+            total_point += PIECE2POINT[piece]
+    return total_point
 
 
 def main():
